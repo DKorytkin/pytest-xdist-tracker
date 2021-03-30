@@ -9,6 +9,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+pytest_xdist_tracker/_version.py
 develop-eggs/
 dist/
 downloads/

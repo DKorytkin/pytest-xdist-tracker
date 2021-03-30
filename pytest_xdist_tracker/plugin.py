@@ -1,6 +1,6 @@
 import os
 
-from pytest_xdist_tracker.tracker import TestRunTracker, TestRunner
+from pytest_xdist_tracker.tracker import TestRunner, TestRunTracker
 
 
 def pytest_addoption(parser):
@@ -24,9 +24,9 @@ def pytest_addoption(parser):
     )
     group.addoption(
         "--from-xdist-stats",
-        action="store",  # TODO ??
-        default="xdist_stats",
-        dest="xdist_stats",
+        action="store",
+        default=None,
+        dest="from_xdist_stats",
         help=(
             "File with tests(nodeid) to run in single thread, could be helpful to reproduce issues "
             "related to coupled tests which corrupted or doesn't clear some state after self"
@@ -41,6 +41,6 @@ def pytest_configure(config):
     if int(os.getenv("PYTEST_XDIST_WORKER_COUNT") or 0) > 0:
         reporter = TestRunTracker(config)
         config.pluginmanager.register(reporter)
-    if config.getoption("--from-xdist-stats"):
+    elif config.getoption("--from-xdist-stats"):
         runner = TestRunner(config)
         config.pluginmanager.register(runner)

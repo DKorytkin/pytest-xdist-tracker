@@ -1,4 +1,5 @@
 import os
+
 import pytest
 
 
@@ -7,10 +8,16 @@ def is_master(config):
     True if the code running the given pytest.config object is running in a xdist master
     node or not running xdist at all.
     """
-    return not hasattr(config, 'workerinput')
+    return not hasattr(config, "workerinput")
 
 
 class TestRunTracker(object):
+    """
+    Plugin track tests which run in particular xdist node
+    As result save artefact with with these tests
+    In case when have some flaky test it could be helpful to reproduce it
+    """
+
     def __init__(self, config):
         self.config = config
         self.is_master = is_master(self.config)
@@ -30,8 +37,12 @@ class TestRunTracker(object):
             self.storage.append(node_id)
 
     def store(self):
-        with open(self.path, "w") as f:
-            f.write("\n".join(self.storage))
+        """
+        Save as artefact all tests which were run inside particular xdist node
+        tests separate by new line
+        """
+        with open(self.path, "w") as file:
+            file.write("\n".join(self.storage))
 
     @pytest.hookimpl(hookwrapper=True, trylast=True)
     def pytest_sessionfinish(self):
@@ -57,28 +68,80 @@ class TestRunTracker(object):
 
 
 class TestRunner(object):
+    """
+    This plugin help to run particular tests from artefact which was generated via `TestRunTracker`
+    """
+
     def __init__(self, config):
         self.config = config
         self.file_path = config.getoption("--from-xdist-stats")
         self._target_tests = None
 
     def read_target_tests(self):
-        with open(self.file_path) as f:
-            data = f.read().split()
+        """
+        Reads artifact which was generated via `TestRunTracker` plugin
+
+        Returns
+        -------
+        list[str]
+            [
+                "tests/backend/test_one.py::test_one",
+                "tests/backend/test_one.py::test_two",
+                ...
+            ]
+        """
+        with open(self.file_path) as file:
+            data = file.read().split()
         return data
 
     @property
     def target_tests(self):
+        """
+        Returns
+        -------
+        list[str]
+            [
+                "tests/backend/test_one.py::test_one",
+                "tests/backend/test_one.py::test_two",
+                ...
+            ]
+        """
         if self._target_tests is None:
             self._target_tests = self.read_target_tests()
         return self._target_tests
 
-    def get_only_necessary_items(self, items):
+    def find_necessary(self, items):
+        """
+        Parameters
+        ----------
+        items: [_pytest.main.Item]
+
+        Returns
+        -------
+        Generator
+        """
+        # FIXME track undefined items
         return (item for item in items if item.nodeid in self.target_tests)
 
     def sorted_as_target_tests(self, items):
+        """
+        Parameters
+        ----------
+        items: [_pytest.main.Item]
+
+        Returns
+        -------
+        Generator
+        """
         return sorted(items, key=lambda x: self.target_tests.index(x.nodeid))
 
-    @pytest.hookimpl(trylast=True)
+    @pytest.hookimpl(hookwrapper=True, trylast=True)
     def pytest_collection_modifyitems(self, session, config, items):
-        items[:] = self.sorted_as_target_tests(self.get_only_necessary_items(items))
+        """
+        Parameters
+        ----------
+        session : pytest.Session
+        config : _pytest.config.Config
+        items : [pytest.Item]
+        """
+        items[:] = self.sorted_as_target_tests(self.find_necessary(items))
