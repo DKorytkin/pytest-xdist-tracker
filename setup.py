@@ -26,7 +26,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/DKorytkin/pytest-xdist-tracker",
-    keywords=["py.test", "pytest", "tracker", "failed tests"],
+    keywords=["py.test", "pytest", "xdist plugin", "tracker", "failed tests"],
     py_modules=[
         "pytest_xdist_tracker.plugin",
         "pytest_xdist_tracker.tracker",
@@ -43,6 +43,7 @@ setup(
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Software Development :: Quality Assurance",
         "Topic :: Software Development :: Testing",
         "Topic :: Utilities",
