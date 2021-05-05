@@ -1,2 +1,6 @@
 coverage
 mock
+
+pytest==3.5.1
+pytest-xdist==1.23.2
+pytest-forked==1.0.1

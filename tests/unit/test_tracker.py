@@ -184,10 +184,10 @@ class TestRunner(object):
         assert runner.config == config
         assert runner._target_tests is None
 
-    def test_read_target_tests(self, tmp_path, runner, target_tests):
-        p = tmp_path / "failed_worker_gw2.txt"
-        p.write_text("\n".join(target_tests))
-        runner.config.getoption.return_value = str(p)
+    def test_read_target_tests(self, expected_file_path, runner, target_tests):
+        with open(expected_file_path, "w") as f:
+            f.write("\n".join(target_tests))
+        runner.config.getoption.return_value = expected_file_path
         tests = runner.read_target_tests()
         assert tests == target_tests
         runner.config.getoption.assert_called_once()

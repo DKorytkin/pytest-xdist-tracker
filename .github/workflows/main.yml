@@ -16,7 +16,6 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -r requirements-dev.txt
-          pip install pytest pytest-xdist
           pip install isort black pylint
 
       - name: Black
@@ -45,7 +44,6 @@ jobs:
     - name: Install Dependencies
       run: |
         pip install -r requirements-dev.txt
-        pip install pytest==3.5.1 pytest-xdist==1.23.2 pytest-forked==1.0.1
         pip install -e .
 
     - name: Testing
