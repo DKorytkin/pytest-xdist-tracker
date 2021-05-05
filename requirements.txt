@@ -1,4 +1,0 @@
-pip
-pytest
-pytest-xdist
-setuptools

@@ -5,10 +5,6 @@ from setuptools import find_packages, setup
 VERSION_FILE = "pytest_xdist_tracker/_version.py"
 
 
-with open("requirements.txt", "r") as fh:
-    deps = [line for line in fh]
-
-
 with codecs.open("README.md", "r", "utf-8") as fh:
     long_description = fh.read()
 
@@ -32,7 +28,10 @@ setup(
         "pytest_xdist_tracker.tracker",
     ],
     packages=find_packages(exclude=["tests*"]),
-    install_requires=deps,
+    install_requires=[
+        "pytest>=3.5.1",
+        "pytest-xdist>=1.23.2",
+    ],
     entry_points={"pytest11": ["tracker = pytest_xdist_tracker.plugin"]},
     license="MIT license",
     python_requires=">=2.7",
