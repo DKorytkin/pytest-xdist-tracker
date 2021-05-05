@@ -24,24 +24,22 @@ def create_pytest_test_item(name):
 
 
 @pytest.fixture
-def config():
+def config(tmpdir):
     c = mock.create_autospec(Config)
     c.getoption.return_value = None
     c.workerinput = {"workerid": "gw2"}
+    c.rootdir = tmpdir
     return c
+
+
+@pytest.fixture
+def expected_file_path(tmpdir):
+    return str(tmpdir / "xdist_stats_worker_gw2.txt")
 
 
 @pytest.fixture
 def node():
     return create_pytest_test_item(0)
-
-
-@pytest.fixture()
-def current_dir(tmpdir):
-    current_dir = os.getcwd()
-    os.chdir(str(tmpdir))
-    yield str(tmpdir)
-    os.chdir(current_dir)
 
 
 class TestTracker(object):
@@ -64,17 +62,11 @@ class TestTracker(object):
         assert len(tracker.storage) == 1
         assert tracker.storage == [node.nodeid]
 
-    def test_file_path(self, tracker):
-        assert tracker.file_path == "xdist_stats_worker_gw2.txt"
-        tracker.config.getoption.assert_called_once()
+    def test_file_path(self, tracker, expected_file_path):
+        assert tracker.file_path.endswith("xdist_stats_worker_gw2.txt")
+        assert tracker.file_path == expected_file_path
 
-    def test_file_path_with_file_pattern(self, tracker):
-        tracker.config.getoption.return_value = "xxx"
-        assert tracker.file_path == "xxx_worker_gw2.txt"
-        tracker.config.getoption.assert_called_once()
-
-    def test_store(self, tracker, node, current_dir):
-        expected_file_path = current_dir + "/xdist_stats_worker_gw2.txt"
+    def test_store(self, tracker, node, expected_file_path):
         tracker.add(node)
         tracker.store()
         assert os.path.isfile(expected_file_path), "File not exist"
@@ -82,9 +74,7 @@ class TestTracker(object):
             content = file_content.read().strip()
         assert content == node.nodeid
 
-    def test_store_with_file_pattern(self, tracker, node, current_dir):
-        tracker.config.getoption.return_value = "xxx"
-        expected_file_path = current_dir + "/xxx_worker_gw2.txt"
+    def test_store_with_file_pattern(self, tracker, node, expected_file_path):
         tracker.add(node)
         tracker.store()
         assert os.path.isfile(expected_file_path), "File not exist"
@@ -92,21 +82,18 @@ class TestTracker(object):
             content = file_content.read().strip()
         assert content == node.nodeid
 
-    def test_store_empty(self, tracker, current_dir):
+    def test_store_empty(self, tracker, expected_file_path):
         tracker.store()
-        expected_file_path = current_dir + "/xdist_stats_worker_gw2.txt"
         assert os.path.isfile(expected_file_path), "File not exist"
         with open(expected_file_path) as file_content:
             content = file_content.read().strip()
         assert content == ""
 
-    def test_pytest_sessionfinish(self, current_dir, tracker):
-        expected_file_path = current_dir + "/xdist_stats_worker_gw2.txt"
+    def test_pytest_sessionfinish(self, expected_file_path, tracker):
         next(tracker.pytest_sessionfinish())
         assert os.path.isfile(expected_file_path), "File not exist"
 
-    def test_pytest_sessionfinish_for_master_node(self, current_dir, tracker):
-        expected_file_path = current_dir + "/xdist_stats_worker_gw2.txt"
+    def test_pytest_sessionfinish_for_master_node(self, expected_file_path, tracker):
         delattr(tracker.config, "workerinput")
         next(tracker.pytest_sessionfinish())
         assert not os.path.isfile(expected_file_path), "File exists"
@@ -236,6 +223,6 @@ class TestRunner(object):
     def test_pytest_collection_modifyitems(self, runner, items, target_tests):
         runner._target_tests = target_tests
         assert len(items) != len(target_tests)
-        runner.pytest_collection_modifyitems(items)
+        next(runner.pytest_collection_modifyitems(items))
         assert len(items) == len(target_tests), "Was not filter target test items"
         assert [i.nodeid for i in items] == target_tests

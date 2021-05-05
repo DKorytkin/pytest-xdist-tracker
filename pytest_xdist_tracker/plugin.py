@@ -38,13 +38,14 @@ def pytest_configure(config):
     """
     Enable this reporter when tests run with XDIST
     """
-    is_run_with_xdist = (
+    is_run_with_xdist = bool(
         config.pluginmanager.get_plugin("xdist") and config.option.numprocesses
     )
+    is_run_xdist_worker = bool(getattr(config, "workerinput", None))
     is_run_to_reproduce = bool(config.getoption("--from-xdist-stats"))
-    if is_run_with_xdist and not is_run_to_reproduce:
+    if (is_run_with_xdist or is_run_xdist_worker) and not is_run_to_reproduce:
         reporter = TestTracker(config)
         config.pluginmanager.register(reporter, name="xdist_tracker")
-    elif is_run_to_reproduce and not is_run_with_xdist:
+    if is_run_to_reproduce and not (is_run_with_xdist or is_run_xdist_worker):
         runner = TestRunner(config)
         config.pluginmanager.register(runner, name="xdist_runner")

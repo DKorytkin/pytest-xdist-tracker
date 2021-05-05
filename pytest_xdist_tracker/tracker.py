@@ -70,8 +70,9 @@ class TestTracker(object):
             ...
         """
         worker_id = get_xdist_worker_id(self.config)
-        _path = self.config.getoption("--xdist-stats") or "xdist_stats"
-        file_path = "{}_worker_{}.txt".format(_path, worker_id)
+        file_path = str(
+            self.config.rootdir / "xdist_stats_worker_{}.txt".format(worker_id)
+        )
         return file_path
 
     def store(self):
@@ -181,3 +182,4 @@ class TestRunner(object):
         items : [pytest.Item]
         """
         items[:] = self.sorted_as_target_tests(self.find_necessary(items))
+        yield

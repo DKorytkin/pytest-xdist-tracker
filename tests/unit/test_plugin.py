@@ -1,6 +1,3 @@
-import pytest
-
-
 def test_execute_xdist_tracker_plugin(testdir):
     config = testdir.parseconfigure("-n1")
     assert config.option.xdist_stats == "xdist_stats"
