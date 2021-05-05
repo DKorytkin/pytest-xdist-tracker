@@ -22,7 +22,7 @@ jobs:
         run: black . --check --diff
 
       - name: Pylint
-        run: pylint pytest_never_sleep
+        run: pylint pytest_xdist_tracker
 
       - name: Isort
         run: isort . --check
@@ -62,7 +62,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           pip install -e .
           pip install -U pytest
 
@@ -82,7 +82,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install -r requirements.txt -r requirements-dev.txt
+          pip install -r requirements-dev.txt
           pip install -e .
           pip install -U git+https://github.com/pytest-dev/pytest.git
 
