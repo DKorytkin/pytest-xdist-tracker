@@ -1,5 +1,6 @@
-import pytest
+import io
 
+import pytest
 
 ENCODING = "utf-8"
 
@@ -84,8 +85,9 @@ class TestTracker(object):
         tests separate by new line
         """
 
-        with open(self.file_path, "w", encoding=ENCODING) as file:
-            file.write("\n".join(self.storage))
+        with io.open(self.file_path, "wb") as file:
+            content = "\n".join(self.storage)
+            file.write(content.encode(ENCODING))
 
     @pytest.hookimpl(hookwrapper=True, trylast=True)
     def pytest_sessionfinish(self):
@@ -133,9 +135,9 @@ class TestRunner(object):
             ]
         """
         file_path = self.config.getoption("--from-xdist-stats")
-        with open(file_path, encoding=ENCODING) as file:
-            data = file.read().split()
-        return data
+        with io.open(file_path, "rb") as file:
+            data = file.read().decode(ENCODING)
+        return data.split()
 
     @property
     def target_tests(self):
