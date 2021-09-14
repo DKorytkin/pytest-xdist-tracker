@@ -39,7 +39,7 @@ def get_xdist_worker_id(config):
 class TestTracker(object):
     """
     Plugin track tests which run in particular xdist node
-    As result save artefact with with these tests
+    As result save artifact with with these tests
     In case when have some flaky test it could be helpful to reproduce it
     """
 
@@ -77,7 +77,7 @@ class TestTracker(object):
 
     def store(self):
         """
-        Save as artefact all tests which were run inside particular xdist node
+        Save as artifact all tests which were run inside particular xdist node
         tests separate by new line
         """
 
@@ -109,7 +109,7 @@ class TestTracker(object):
 
 class TestRunner(object):
     """
-    This plugin help to run particular tests from artefact which was generated via `TestRunTracker`
+    This plugin help to run particular tests from artifact which was generated via `TestRunTracker`
     """
 
     def __init__(self, config):
