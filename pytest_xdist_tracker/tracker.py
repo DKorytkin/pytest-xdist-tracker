@@ -1,6 +1,9 @@
 import pytest
 
 
+ENCODING = "utf-8"
+
+
 def is_xdist_worker(config):
     """
     Parameters
@@ -81,7 +84,7 @@ class TestTracker(object):
         tests separate by new line
         """
 
-        with open(self.file_path, "w") as file:
+        with open(self.file_path, "w", encoding=ENCODING) as file:
             file.write("\n".join(self.storage))
 
     @pytest.hookimpl(hookwrapper=True, trylast=True)
@@ -130,7 +133,7 @@ class TestRunner(object):
             ]
         """
         file_path = self.config.getoption("--from-xdist-stats")
-        with open(file_path) as file:
+        with open(file_path, encoding=ENCODING) as file:
             data = file.read().split()
         return data
 
