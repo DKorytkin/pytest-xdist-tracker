@@ -1,6 +1,6 @@
 # pytest-xdist-tracker
 
-This plugin allows us to keep artefact after running test with xdist (parallel)
+This plugin allows us to keep artifact after running test with xdist (parallel)
 
 
 ## Installation

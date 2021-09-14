@@ -1,4 +1,8 @@
+import io
+
 import pytest
+
+ENCODING = "utf-8"
 
 
 def is_xdist_worker(config):
@@ -39,7 +43,7 @@ def get_xdist_worker_id(config):
 class TestTracker(object):
     """
     Plugin track tests which run in particular xdist node
-    As result save artefact with with these tests
+    As result save artifact with with these tests
     In case when have some flaky test it could be helpful to reproduce it
     """
 
@@ -77,12 +81,13 @@ class TestTracker(object):
 
     def store(self):
         """
-        Save as artefact all tests which were run inside particular xdist node
+        Save as artifact all tests which were run inside particular xdist node
         tests separate by new line
         """
 
-        with open(self.file_path, "w") as file:
-            file.write("\n".join(self.storage))
+        with io.open(self.file_path, "wb") as file:
+            content = "\n".join(self.storage)
+            file.write(content.encode(ENCODING))
 
     @pytest.hookimpl(hookwrapper=True, trylast=True)
     def pytest_sessionfinish(self):
@@ -109,7 +114,7 @@ class TestTracker(object):
 
 class TestRunner(object):
     """
-    This plugin help to run particular tests from artefact which was generated via `TestRunTracker`
+    This plugin help to run particular tests from artifact which was generated via `TestRunTracker`
     """
 
     def __init__(self, config):
@@ -130,9 +135,9 @@ class TestRunner(object):
             ]
         """
         file_path = self.config.getoption("--from-xdist-stats")
-        with open(file_path) as file:
-            data = file.read().split()
-        return data
+        with io.open(file_path, "rb") as file:
+            data = file.read().decode(ENCODING)
+        return data.split()
 
     @property
     def target_tests(self):
