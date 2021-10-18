@@ -16,13 +16,13 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -r requirements-dev.txt
-          pip install isort black pylint
+          pip install isort black pylint==2.7.4
 
       - name: Black
         run: black . --check --diff
 
       - name: Pylint
-        run: pylint pytest_xdist_tracker
+        run: pylint --py3k pytest_xdist_tracker
 
       - name: Isort
         run: isort . --check
