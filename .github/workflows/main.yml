@@ -22,7 +22,7 @@ jobs:
         run: black . --check --diff
 
       - name: Pylint
-        run: pylint pytest_xdist_tracker
+        run: pylint --py3k pytest_xdist_tracker
 
       - name: Isort
         run: isort . --check
