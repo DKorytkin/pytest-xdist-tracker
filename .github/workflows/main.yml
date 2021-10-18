@@ -16,7 +16,6 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -r requirements-dev.txt
-          pip install isort black pylint
 
       - name: Black
         run: black . --check --diff

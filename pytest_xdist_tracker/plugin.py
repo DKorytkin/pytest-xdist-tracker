@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from pytest_xdist_tracker.tracker import TestRunner, TestTracker
 
 
