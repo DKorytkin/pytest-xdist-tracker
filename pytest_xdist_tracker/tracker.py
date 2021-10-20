@@ -181,7 +181,7 @@ class TestRunner(object):
         """
         return sorted(items, key=lambda x: self.target_tests.index(x.nodeid))
 
-    @pytest.hookimpl(hookwrapper=True, trylast=True)
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_collection_modifyitems(self, items):
         """
         Parameters
