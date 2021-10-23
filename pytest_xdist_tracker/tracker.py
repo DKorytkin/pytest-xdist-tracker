@@ -5,7 +5,6 @@ import io
 import pytest
 from six.moves import urllib_parse
 
-
 ENCODING = "utf-8"
 
 
@@ -171,7 +170,9 @@ class TestRunner(object):
         test_cases = []
         with io.open(file_path, "rb") as file:
             for line in file:
-                test_cases.append(urllib_parse.unquote(line.decode(ENCODING).rstrip("\n")))
+                test_cases.append(
+                    urllib_parse.unquote(line.decode(ENCODING).rstrip("\n"))
+                )
         return test_cases
 
     @property
