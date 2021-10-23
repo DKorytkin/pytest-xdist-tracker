@@ -7,6 +7,7 @@ except ImportError:
 
 import pytest
 from _pytest.config import Config
+from six.moves import urllib_parse
 
 from pytest_xdist_tracker.tracker import TestRunner as Runner
 from pytest_xdist_tracker.tracker import TestTracker as Tracker
@@ -33,11 +34,6 @@ def config(tmpdir):
 
 
 @pytest.fixture
-def expected_file_path(tmpdir):
-    return str(tmpdir / "xdist_stats_worker_gw2.txt")
-
-
-@pytest.fixture
 def node():
     return create_pytest_test_item(0)
 
@@ -53,14 +49,14 @@ class TestTracker(object):
 
     def test_add(self, tracker, node):
         tracker.add(node)
-        assert tracker.storage == [node.nodeid]
+        assert tracker.storage == [urllib_parse.quote(node.nodeid)]
 
     def test_add_multiply_times(self, tracker, node):
         tracker.add(node)
         tracker.add(node)
         tracker.add(node)
         assert len(tracker.storage) == 1
-        assert tracker.storage == [node.nodeid]
+        assert tracker.storage == [urllib_parse.quote(node.nodeid)]
 
     def test_file_path(self, tracker, expected_file_path):
         assert tracker.file_path.endswith("xdist_stats_worker_gw2.txt")
@@ -72,7 +68,7 @@ class TestTracker(object):
         assert os.path.isfile(expected_file_path), "File not exist"
         with open(expected_file_path) as file_content:
             content = file_content.read().strip()
-        assert content == node.nodeid
+        assert urllib_parse.unquote(content) == node.nodeid
 
     def test_store_with_file_pattern(self, tracker, node, expected_file_path):
         tracker.add(node)
@@ -80,7 +76,7 @@ class TestTracker(object):
         assert os.path.isfile(expected_file_path), "File not exist"
         with open(expected_file_path) as file_content:
             content = file_content.read().strip()
-        assert content == node.nodeid
+        assert urllib_parse.unquote(content) == node.nodeid
 
     def test_store_empty(self, tracker, expected_file_path):
         tracker.store()
@@ -93,19 +89,20 @@ class TestTracker(object):
         next(tracker.pytest_sessionfinish())
         assert os.path.isfile(expected_file_path), "File not exist"
 
-    def test_pytest_sessionfinish_for_master_node(self, expected_file_path, tracker):
+    def test_pytest_sessionfinish_for_master_node(self, tracker):
         delattr(tracker.config, "workerinput")
         next(tracker.pytest_sessionfinish())
-        assert not os.path.isfile(expected_file_path), "File exists"
+        assert not os.path.isfile(tracker.file_path), "File exists"
 
     def test_pytest_runtest_call(self, node, tracker):
         next(tracker.pytest_runtest_call(node))
-        assert tracker.storage == [node.nodeid]
+        assert tracker.storage == [urllib_parse.quote(node.nodeid)]
 
 
 class TestRunner(object):
     @pytest.fixture
-    def runner(self, config):
+    def runner(self, config, expected_file_path):
+        config.getoption.return_value = expected_file_path
         return Runner(config=config)
 
     @pytest.fixture
@@ -180,32 +177,23 @@ class TestRunner(object):
         """
         return sorted([node.nodeid for node in target_items])
 
-    def test_instance(self, runner, config):
+    def test_instance(self, runner, config, default_test_nodeid):
         assert runner.config == config
-        assert runner._target_tests is None
+        assert runner._target_tests is not None
+        assert runner.target_tests == runner._target_tests
+        assert runner.target_tests == [default_test_nodeid]
 
-    def test_read_target_tests(self, expected_file_path, runner, target_tests):
-        with open(expected_file_path, "w") as f:
-            f.write("\n".join(target_tests))
-        runner.config.getoption.return_value = expected_file_path
+    def test_read_target_tests(self, expected_file_path, runner, default_test_nodeid):
         tests = runner.read_target_tests()
-        assert tests == target_tests
-        runner.config.getoption.assert_called_once()
+        assert tests == [default_test_nodeid]
 
     def test_read_target_tests_file_absent(self, runner):
-        runner.config.getoption.return_value = "file_not_exist.txt"
+        runner.config.getoption.side_effect = "file_not_exist.txt"
         with pytest.raises(FileNotFoundError):
             runner.read_target_tests()
-        runner.config.getoption.assert_called_once()
 
-    def test_target_tests(self, runner, node):
-        with mock.patch.object(
-            runner, "read_target_tests", return_value=[node.nodeid]
-        ) as m:
-            assert runner.target_tests == [node.nodeid]
-            m.assert_called_once()
-            assert runner.target_tests == [node.nodeid]
-            m.assert_called_once()
+    def test_target_tests(self, runner, node, default_test_nodeid):
+        assert runner.target_tests == [default_test_nodeid]
 
     def test_find_necessary(self, runner, target_tests, items):
         runner._target_tests = target_tests
