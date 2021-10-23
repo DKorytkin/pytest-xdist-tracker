@@ -32,6 +32,7 @@ setup(
         "pytest>=3.5.1",
         "pytest-xdist>=1.23.2",
         "pytest-forked>=1.0.1",
+        "six>=1.15.0",
     ],
     entry_points={"pytest11": ["tracker = pytest_xdist_tracker.plugin"]},
     license="MIT license",
