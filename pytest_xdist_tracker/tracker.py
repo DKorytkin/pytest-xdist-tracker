@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import io
 
 import pytest
+from six.moves import urllib_parse
 
 ENCODING = "utf-8"
 
@@ -51,7 +52,29 @@ class TestTracker(object):
 
     def __init__(self, config):
         self.config = config
+        self.is_loadfile = self.config.getoption("dist") == "loadfile"
         self.storage = []
+
+    def get_name(self, item):
+        """
+        Usually returns full test case name
+            "tests/path/test_module.py::TestCase::test_one"
+        But if was passed dist=loadfile will be enough just test module name
+            "tests/path/test_module.py"
+
+        Parameters
+        -----------
+        item : _pytest.main.Item
+
+        Returns
+        -------
+        str
+        """
+        if self.is_loadfile:
+            # TODO #7 dist in node always `no`
+            # ("test_module_path.py", line number, "test_case")
+            return item.location[0]
+        return urllib_parse.quote(item.nodeid)
 
     def add(self, item):
         """
@@ -59,9 +82,9 @@ class TestTracker(object):
         -----------
         item : _pytest.main.Item
         """
-        node_id = item.nodeid
-        if node_id not in self.storage:
-            self.storage.append(node_id)
+        name = self.get_name(item)
+        if name not in self.storage:
+            self.storage.append(name)
 
     @property
     def file_path(self):
@@ -120,8 +143,15 @@ class TestRunner(object):
     """
 
     def __init__(self, config):
+        """
+        Parameters
+        ----------
+        config: _pytest.config.Config
+        """
         self.config = config
         self._target_tests = None
+        # patch passed arguments `tests/...`
+        self.config.args = self.target_test_modules
 
     def read_target_tests(self):
         """
@@ -137,9 +167,13 @@ class TestRunner(object):
             ]
         """
         file_path = self.config.getoption("--from-xdist-stats")
+        test_cases = []
         with io.open(file_path, "rb") as file:
-            data = file.read().decode(ENCODING)
-        return data.split()
+            for line in file:
+                test_cases.append(
+                    urllib_parse.unquote(line.decode(ENCODING).rstrip("\n"))
+                )
+        return test_cases
 
     @property
     def target_tests(self):
@@ -156,6 +190,15 @@ class TestRunner(object):
         if self._target_tests is None:
             self._target_tests = self.read_target_tests()
         return self._target_tests
+
+    @property
+    def target_test_modules(self):
+        """
+        Returns
+        -------
+        set[str]
+        """
+        return {test_case.split("::")[0] for test_case in self.target_tests}
 
     def find_necessary(self, items):
         """
