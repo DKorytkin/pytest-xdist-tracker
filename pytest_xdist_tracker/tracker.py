@@ -4,9 +4,44 @@ import io
 
 import pytest
 from six.moves import urllib_parse
-from xdist import get_xdist_worker_id, is_xdist_worker
+
 
 ENCODING = "utf-8"
+
+
+def is_xdist_worker(config):
+    """
+    Parameters
+    ----------
+    config: _pytest.config.Config
+
+    Return
+    ------
+    bool
+        `True` if this is an xdist worker, `False` otherwise
+    """
+    return hasattr(config, "workerinput")
+
+
+def get_xdist_worker_id(config):
+    """
+    Parameters
+    ----------
+    config: _pytest.config.Config
+
+    Returns
+    -------
+    str
+        the id of the current worker ('gw0', 'gw1', etc) or 'master'
+        if running on the 'master' node.
+
+        If not distributing tests (for example passing `-n0` or not passing `-n` at all)
+        also return 'master'.
+    """
+    worker_input = getattr(config, "workerinput", None)
+    if worker_input:
+        return worker_input["workerid"]
+    return "master"
 
 
 class TestTracker(object):
@@ -65,9 +100,7 @@ class TestTracker(object):
             ...
         """
         worker_id = get_xdist_worker_id(self.config)
-        file_name = "{}_worker_{}.txt".format(
-            self.config.getoption("--xdist-stats"), worker_id
-        )
+        file_name = "{}_worker_{}.txt".format(self.config.getoption("--xdist-stats"), worker_id)
         return str(self.config.rootdir / file_name)
 
     def store(self):
