@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+from xdist import is_xdist_worker
+
 from pytest_xdist_tracker.tracker import TestRunner, TestTracker
 
 
@@ -43,7 +45,7 @@ def pytest_configure(config):
     is_run_with_xdist = bool(
         config.pluginmanager.get_plugin("xdist") and config.option.numprocesses
     )
-    is_run_xdist_worker = bool(getattr(config, "workerinput", None))
+    is_run_xdist_worker = bool(is_xdist_worker(config))
     is_run_to_reproduce = bool(config.getoption("--from-xdist-stats"))
     if (is_run_with_xdist or is_run_xdist_worker) and not is_run_to_reproduce:
         reporter = TestTracker(config)

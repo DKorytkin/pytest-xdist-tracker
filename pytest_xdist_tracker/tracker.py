@@ -4,43 +4,9 @@ import io
 
 import pytest
 from six.moves import urllib_parse
+from xdist import get_xdist_worker_id, is_xdist_worker
 
 ENCODING = "utf-8"
-
-
-def is_xdist_worker(config):
-    """
-    Parameters
-    ----------
-    config: _pytest.config.Config
-
-    Return
-    ------
-    bool
-        `True` if this is an xdist worker, `False` otherwise
-    """
-    return hasattr(config, "workerinput")
-
-
-def get_xdist_worker_id(config):
-    """
-    Parameters
-    ----------
-    config: _pytest.config.Config
-
-    Returns
-    -------
-    str
-        the id of the current worker ('gw0', 'gw1', etc) or 'master'
-        if running on the 'master' node.
-
-        If not distributing tests (for example passing `-n0` or not passing `-n` at all)
-        also return 'master'.
-    """
-    worker_input = getattr(config, "workerinput", None)
-    if worker_input:
-        return worker_input["workerid"]
-    return "master"
 
 
 class TestTracker(object):
@@ -99,10 +65,10 @@ class TestTracker(object):
             ...
         """
         worker_id = get_xdist_worker_id(self.config)
-        file_path = str(
-            self.config.rootdir / "xdist_stats_worker_{}.txt".format(worker_id)
+        file_name = "{}_worker_{}.txt".format(
+            self.config.getoption("--xdist-stats"), worker_id
         )
-        return file_path
+        return str(self.config.rootdir / file_name)
 
     def store(self):
         """
@@ -139,7 +105,7 @@ class TestTracker(object):
 
 class TestRunner(object):
     """
-    This plugin help to run particular tests from artifact which was generated via `TestRunTracker`
+    This plugin help to run particular tests from artifact which was generated via `TestTracker`
     """
 
     def __init__(self, config):
@@ -159,7 +125,7 @@ class TestRunner(object):
 
         Returns
         -------
-        list[str]
+        List[str]
             [
                 "tests/backend/test_one.py::test_one",
                 "tests/backend/test_one.py::test_two",
@@ -180,7 +146,7 @@ class TestRunner(object):
         """
         Returns
         -------
-        list[str]
+        List[str]
             [
                 "tests/backend/test_one.py::test_one",
                 "tests/backend/test_one.py::test_two",
@@ -204,7 +170,7 @@ class TestRunner(object):
         """
         Parameters
         ----------
-        items: [_pytest.main.Item]
+        items: List[_pytest.main.Item]
 
         Returns
         -------
@@ -216,7 +182,7 @@ class TestRunner(object):
         """
         Parameters
         ----------
-        items: [_pytest.main.Item]
+        items: List[_pytest.main.Item]
 
         Returns
         -------
@@ -229,7 +195,7 @@ class TestRunner(object):
         """
         Parameters
         ----------
-        items : [pytest.Item]
+        items : List[pytest.Item]
         """
         items[:] = self.sorted_as_target_tests(self.find_necessary(items))
         yield
