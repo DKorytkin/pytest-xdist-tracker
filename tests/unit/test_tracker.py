@@ -39,8 +39,15 @@ def node():
 
 
 class TestTracker(object):
+    FILE_NAME = "my_super_name"
+
+    @pytest.fixture
+    def file_name(self):
+        return "{}_worker_gw2.txt".format(self.FILE_NAME)
+
     @pytest.fixture
     def tracker(self, config):
+        config.getoption.return_value = self.FILE_NAME
         return Tracker(config=config)
 
     def test_instance(self, tracker, config):
@@ -59,7 +66,7 @@ class TestTracker(object):
         assert tracker.storage == [urllib_parse.quote(node.nodeid)]
 
     def test_file_path(self, tracker, expected_file_path):
-        assert tracker.file_path.endswith("xdist_stats_worker_gw2.txt")
+        assert tracker.file_path.endswith("{}_worker_gw2.txt".format(self.FILE_NAME))
         assert tracker.file_path == expected_file_path
 
     def test_store(self, tracker, node, expected_file_path):
@@ -100,9 +107,15 @@ class TestTracker(object):
 
 
 class TestRunner(object):
+    FILE_NAME = "my_awesome_name"
+
     @pytest.fixture
-    def runner(self, config, expected_file_path):
-        config.getoption.return_value = expected_file_path
+    def file_name(self):
+        return "{}_worker_gw2.txt".format(self.FILE_NAME)
+
+    @pytest.fixture
+    def runner(self, config, expected_file):
+        config.getoption.return_value = expected_file
         return Runner(config=config)
 
     @pytest.fixture

@@ -5,7 +5,6 @@ import io
 import pytest
 from six.moves import urllib_parse
 
-
 ENCODING = "utf-8"
 
 
@@ -100,7 +99,9 @@ class TestTracker(object):
             ...
         """
         worker_id = get_xdist_worker_id(self.config)
-        file_name = "{}_worker_{}.txt".format(self.config.getoption("--xdist-stats"), worker_id)
+        file_name = "{}_worker_{}.txt".format(
+            self.config.getoption("--xdist-stats"), worker_id
+        )
         return str(self.config.rootdir / file_name)
 
     def store(self):

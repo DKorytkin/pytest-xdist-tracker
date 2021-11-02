@@ -7,7 +7,18 @@ def default_test_nodeid():
 
 
 @pytest.fixture
-def expected_file_path(tmpdir, default_test_nodeid):
-    path = tmpdir / "xdist_stats_worker_gw2.txt"
-    path.write(default_test_nodeid)
-    return str(path)
+def file_name():
+    # can be overwritten via local fixture
+    return "xdist_stats_worker_gw2.txt"
+
+
+@pytest.fixture
+def expected_file_path(tmpdir, file_name):
+    return str(tmpdir / file_name)
+
+
+@pytest.fixture
+def expected_file(expected_file_path, default_test_nodeid):
+    with open(expected_file_path, "w") as f:
+        f.write(default_test_nodeid)
+    return expected_file_path
