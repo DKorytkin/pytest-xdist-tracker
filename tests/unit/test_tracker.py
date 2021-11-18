@@ -30,6 +30,7 @@ def config(tmpdir):
     c.getoption.return_value = None
     c.workerinput = {"workerid": "gw2"}
     c.rootdir = tmpdir
+    c.args = ["tests/backend/unit"]
     return c
 
 
@@ -116,7 +117,10 @@ class TestRunner(object):
     @pytest.fixture
     def runner(self, config, expected_file):
         config.getoption.return_value = expected_file
-        return Runner(config=config)
+        assert config.args == ["tests/backend/unit"]
+        r = Runner(config=config)
+        assert config.args != ["tests/backend/unit"] and config.args
+        return r
 
     @pytest.fixture
     def target_items(self, node):
