@@ -148,10 +148,10 @@ class TestRunner(object):
         ----------
         config: _pytest.config.Config
         """
-        self.config = config
         self._target_tests = None
-        # patch passed arguments `tests/...`
-        self.config.args = self.target_test_modules
+        self.config = config
+        # patch of passed arguments `tests/...` to reduce collection runtime
+        self.config.args[:] = self.target_test_modules
 
     def read_target_tests(self):
         """
@@ -198,7 +198,7 @@ class TestRunner(object):
         -------
         set[str]
         """
-        return {test_case.split("::")[0] for test_case in self.target_tests}
+        return list({test_case.split("::")[0] for test_case in self.target_tests})
 
     def find_necessary(self, items):
         """
@@ -224,7 +224,7 @@ class TestRunner(object):
         """
         return sorted(items, key=lambda x: self.target_tests.index(x.nodeid))
 
-    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_collection_modifyitems(self, items):
         """
         Parameters
